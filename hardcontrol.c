@@ -7,6 +7,11 @@
 
 #include <android/log.h> /* liblog */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
+#include <sys/ioctl.h>
+
 //__android_log_printf(ANDROID_LOG_DEBUG, "JNIDemo","native add ...");
 
 #if 0
@@ -18,21 +23,31 @@ typedef struct {
 #endif
 
 
+static jint fd;
+
+
 jint ledOpen(JNIEnv *env, jclass cls)
 {	
-	__android_log_print(ANDROID_LOG_DEBUG, "ledOpen","native ledOpen ...");
-	return 0;
+	fd = open("dev/leds",O_RDWR);
+	__android_log_print(ANDROID_LOG_DEBUG, "ledOpen","native ledOpen: %d", fd);
+
+	if(fd >= 0)
+		return 0;
+	else
+		return -1;
 }
 
 void ledClose(JNIEnv *env, jclass cls)
 {	
 	__android_log_print(ANDROID_LOG_DEBUG, "ledClose","native ledClose ...");
+	close(fd);
 }
 
 jint ledCtrl(JNIEnv *env, jclass cls,jint which, jint status)
 {	
-	__android_log_print(ANDROID_LOG_DEBUG, "ledCtrl","native ledCtrl: %d %d",which,status);
-	return 0;
+	int ret = ioctl(fd, status, which);
+	__android_log_print(ANDROID_LOG_DEBUG, "ledCtrl","native ledCtrl: %d %d %d",which,status,ret);
+	return ret;
 }
 
 static const JNINativeMethod methods[] = {
